@@ -25,8 +25,24 @@ public class AuthService {
     @Value("${auth.kakao.callback.uri}")
     private String callbackUri;
 
-    public String getToken(String authorizationCode) {
+    public String getUserInfo(String authorizationCode) {
         RestTemplate restTemplate = new RestTemplate();
+        String accessToken = this.getToken(restTemplate, authorizationCode);
+        String domain = "https://kapi.kakao.com/v2/user/me";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.add("Accept", "application/json");
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(headers);
+
+        ResponseEntity<KakaoUserResponse> kakaoResponse = restTemplate.postForEntity(domain, request, KakaoUserResponse.class);
+        log.info(String.valueOf(kakaoResponse.getBody().getId()));
+
+        return kakaoResponse.getBody().getId();
+    }
+
+    private String getToken(RestTemplate restTemplate, String authorizationCode) {
         String domain = "https://kauth.kakao.com/oauth/token";
 
         HttpHeaders headers = new HttpHeaders();
@@ -39,29 +55,11 @@ public class AuthService {
         params.add("code", authorizationCode);
         params.add("grant_type", "authorization_code");
 
-        // Set http entity
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
         ResponseEntity<KakaoTokenResponse> kakaoResponse = restTemplate.postForEntity(domain, request, KakaoTokenResponse.class);
         log.info(String.valueOf(kakaoResponse.getBody().getAccess_token()));
 
         return kakaoResponse.getBody().getAccess_token();
-    }
-
-    public String getUserInfo(String accessToken) {
-        RestTemplate restTemplate = new RestTemplate();
-        String domain = "https://kapi.kakao.com/v2/user/me";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        headers.add("Accept", "application/json");
-
-        // Set http entity
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(headers);
-
-        ResponseEntity<KakaoUserResponse> kakaoResponse = restTemplate.postForEntity(domain, request, KakaoUserResponse.class);
-        log.info(String.valueOf(kakaoResponse.getBody().getId()));
-
-        return kakaoResponse.getBody().getId();
     }
 }

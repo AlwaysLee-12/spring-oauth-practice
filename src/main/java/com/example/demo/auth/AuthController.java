@@ -14,8 +14,7 @@ public class AuthController {
 
     @GetMapping("/kakao/callback")
     public String getUserInfo(@RequestParam("code") String authorizationCode, Model model) {
-        String accessToken = this.authService.getToken(authorizationCode);
-        String userId = this.authService.getUserInfo(accessToken);
+        String userId = this.authService.getUserInfo(authorizationCode);
 
         model.addAttribute("userId", userId);
 
